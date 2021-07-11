@@ -1,0 +1,1038 @@
+--Listar los proveedores con status mayor a 4 y que no sean de londres
+Select * from proveedor where status>4 and ciudad<>'Londres';
+
+--Listar los nombres de piezas grises de mas de 4g
+Select nompie from pieza where color='Gris' and peso>4;
+
+--Listar los pedidos de cantidades superiores a 200 unidades y listando solo los codigos de proveedor
+select distinct codpro from ventas where cantidad>200;
+
+--Listar piezas que han sido vendidas en un mismo pedido en cantidad mayor de 500 unidades
+--despues del 17 de marzo de 2015
+select distinct codpie, nompie, cantidad, ciudad from ((select * from ventas where cantidad>500 and fecha>'17/03/2015') NATURAL JOIN (select * from pieza));
+
+select distinct codpie from ventas where cantidad>500 and fecha>'17/03/2015';
+
+
+--Listar nombre de piezas grises o blancas que pesen menos de 5 g
+select nompie from pieza where (color like '_ris' or color like '_lanco') and peso<5;
+
+select nompie from pieza where (upper(color) in ('GRIS','BLANCO') and peso<5);
+
+--Listar encuentros jugados tras el 1 de octubre de 2017 en los que haya ganado
+--el visitante
+select * from encuentros where fecha>'01/10/2011' and pvisitante>plocal;
+
+--Nombre de proveedores que han vendido la p2
+select distinct nompro from ((SELECT  * from ventas where codpie='P2') NATURAL JOIN (select * from proveedor));
+
+select distinct nompro from proveedor, ventas where proveedor.codpro = ventas.codpro and codpie='P2' order by nompro;
+
+--Datos completos de las piezas grises o rojas vendidas al proyecto j3 (color, peso, ciudad)
+select distinct codpie, color, peso, ciudad from ((select * from ventas where codpj='J3') NATURAL JOIN (select * from pieza WHERE upper(color) in ('GRIS','ROJO')));
+
+select distinct codpie, color, peso, ciudad from pieza NATURAL JOIN (select * from ventas where codpj='J3') WHERE upper(color) in ('GRIS','ROJO');
+
+select * from pieza, ventas where(ventas.codpie=pieza.codpie and lower(color) in ('rojo','gris') and codpj = 'J3');
+
+--Nombre de proveedor, pieza y proyecto que se encuentren en la misma ciudad
+select distinct ciudad, nompie, nompro, nompj from (select * from proveedor Natural join (select * from pieza) natural join (select * from proyecto));
+
+select distinct nompie, nompro, nompj from pieza,proyecto, proveedor  where (proveedor.ciudad = proyecto.ciudad and proyecto.ciudad=pieza.ciudad);
+
+--Ventas hechas antes del 01/01/14 cuya cantidad de unidades supera las 200 y que
+--hayan sido realizadas con un proveedor con status>2
+select * from ((select * from ventas where fecha<'01/01/14' and cantidad>200) natural join (select * from proveedor where status>2));
+
+select * from ventas, proveedor where (fecha<'01/01/14' and cantidad>200 and status>2);
+
+
+--Nombres de proveedor, pieza y proyecto que se encuentren en la misma coudad y 
+--que hayan tenido una venta , una relacion comercial conjunta
+select nompie, nompj, nompro from (select distinct nompie, nompj, nompro, codpie, codpj, codpro from pieza,proyecto, proveedor  where (proveedor.ciudad = proyecto.ciudad and proyecto.ciudad=pieza.ciudad)) S,ventas where (ventas.codpie = S.codpie and ventas.codpj = S.codpj and ventas.codpro = S.codpro);
+
+
+--Codigo de proveedores que han vendido alguna pieza gris o blanca
+select distinct codpro from ((select * from pieza where upper(color) in ('GRIS','BLANCO')) natural join (select * from ventas));
+
+
+--Listado de los jugadores que participaron en el encuentro entres los equipos
+--Barcelona, Unicaja  
+select nombrej from (select codj from alineaciones where (upper(elo) in (''))) natural join (select jugadores. from jugadores);
+
+select codj from alineaciones, jugadores where upper(alineaciones.elo) in ()
+
+select * from ((select * from equipos where upper(nombree) in ('%BARCELONA%','UNICAJA')) natural join (select * from alineaciones));
+
+select * from alineaciones;
+
+select nombrej from ((select distinct codj from ((select * from equipos where upper(nombree) like '%BARCELONA%' OR UPPER(nombree)='UNICAJA') natural join (select * from alineaciones where (upper(elocal) in ('')))))) natural join (select * from jugadores))
+
+
+
+--Nombre del equipo del jugador Felipe Reyes
+select nombree from (select code from jugadores where upper(nombrej) in ('FELIPE REYES')) NATURAL JOIN (select * from equipos);
+
+
+--Jugadores del valencia que han cometido mas de 3 faltas personales jugando en casa
+select nombrej from ((select codj from alineaciones where elocal='VLB' and faltas>3) natural join (select * from jugadores));
+
+
+--Encontrar codpie que ha sido vendida por S1 y S4
+select codpie from ventas where codpro='S1'
+intersect
+select codpie from ventas where codpro='S4';
+
+
+--Nombres de proyectos que han usado P1 y P3
+select distinct nompj from ((select * from proyecto) natural join (select codpj from ventas where codpie='P1'
+intersect
+select codpj from ventas where codpie='P3')) order by nompj;
+
+
+--Nombres del proyecto que han usado P1 pero no P3
+select distinct nompj from ((select * from proyecto) natural join ((select codpj from ventas where codpie='P1') 
+minus
+(select codpj from ventas where codpie='P3')));
+
+
+--Ciudades donde viven proveedores con status mayor que 2 en las que no se 
+--fabrica 'P1' usndo intersect
+(select ciudad from proveedor where status>2) intersect (select ciudad from pieza where codpie<>'P1');
+
+
+--Codpj a los que solo abastece 'S1'
+select distinct codpj from (select* from ventas where codpro='S1' minus select * from ventas where codpro<>'S1');
+
+
+--ventas que superan a la media
+select * from ventas where cantidad>(select AVG(cantidad) from ventas);
+
+
+--Piezas diferentes que se han vendido
+select * from (select codpie from pieza where codpie = 'P1'), (select count(*) from ventas where codpie='P1');
+select * from (select codpie from pieza where codpie = 'P2'), (select count(*) from ventas where codpie='P2');
+select * from (select codpie from pieza where codpie = 'P3'), (select count(*) from ventas where codpie='P3');
+select * from (select codpie from pieza where codpie = 'P4'), (select count(*) from ventas where codpie='P4');
+select * from (select codpie from pieza where codpie = 'P5'), (select count(*) from ventas where codpie='P5');
+
+select count(distinct codpie) from ventas;  --Cuantos tipos de piezas se han vendido
+
+select count(*) from ventas;  --Cuantas piezas en total se han vendido
+
+
+--Para cada proveedor dime los pedidos realizados (codpro y cantidad de pedidos)
+select codpro, count(*) pedidos from ventas group by codpro;
+
+
+--Codpro y nombre de los proveedores junto con las cantidades de pedidos de cada uno
+select codpro, nompro, pedidos from ((select codpro, count(*) pedidos from ventas group by codpro) natural join (select * from proveedor));
+
+
+--Cantidad de piezas que ha vendido cada proveedor
+select codpro, count(distinct codpie) piezas_diferentes from ventas group by codpro; --Cuantos tipos de piezas diferentes vende cada proveedor
+
+select codpro, codpie,count(*) from ventas group by codpro, codpie;  --Cantidad de piezas que vende cada proveedor de cada tipo
+
+
+--Encontrar la cantidad media de unidades de la pieza p1 realizada por cada proveedor
+
+
+--Sobre la consulta anterior, mostrar solo aquellos proveedores cuya cantiadd de
+--piezas p1 vendidas supere las 300 unidades
+select * from ((select codpro, avg(cantidad) from ventas where(codpie='P1') group by codpro HAVING avg(cantidad)>300) NATURAL JOIN (SELECT * FROM PROVEEDOR WHERE upper(ciudad) in ('LONDRES'))) ;
+
+
+
+--Encontrar la cantidad total(sum) de cada pieza enviada a cada proyecto 
+select codpj, codpie ,sum(cantidad) from ventas group by codpj, codpie;
+
+
+
+--Mostrar los nombres de los proveedores tales que el total de sus ventas supere
+--las 1000 unidades
+select nompro from ((select codpro, sum(cantidad) ventas_totales from ventas group by codpro having sum(cantidad)>1000) natural join (select * from proveedor));
+
+
+--Mostrar para cada pieza la maxima cantidad vendida
+select codpie, max(cantidad) cantidad_maxima from ventas group by codpie order by codpie;
+
+
+--codigo de la pieza mas vendida
+select codpie from ((select codpie, max(cantidad) cantidad_maxima from ventas group by codpie) minus (select distinct vent.codpie, vent.cantidad_maxima from (select codpie, max(cantidad) cantidad_maxima from ventas group by codpie order by codpie) vent, (select codpie, max(cantidad) cantidad_maxima from ventas group by codpie order by codpie) v where vent.cantidad_maxima<v.cantidad_maxima));
+
+select codpie, sum(cantidad) from ventas group by codpie having sum(cantidad) >= all(select sum(cantidad) from ventas group by codpie);
+
+select codpie, sum(cantidad) from ventas group by codpie having sum(cantidad) = (select max(sum(cantidad)) from ventas group by codpie);
+
+
+--Piezas que han sido compradas por todos los proyectos
+(select codpie from ventas)
+minus
+(select codpie 
+            from(
+                    (select v.codpie, p.codpj FROM
+                            (select distinct codpie from ventas) v,
+                            (select codpj FROM proyecto) p
+                            
+                    )
+                    minus  
+                    (select codpie, codpj FROM ventas)
+            )
+);
+
+
+--Proveedores que suministran todas las piezas de color blanco 
+(select codpro from ventas)
+minus
+(select codpro 
+            from(
+                    (select v.codpro, p.codpie FROM
+                            (select distinct codpro from ventas) v,
+                            (select codpie FROM pieza where upper(color) in ('BLANCO')) p
+                            
+                    )
+                    minus  
+                    (select codpro, codpie from ((select codpro, codpie FROM ventas) NATURAL JOIN (select codpie from pieza where upper(color) in ('BLANCO') )))
+            )
+);
+
+
+(select codpro from ventas)
+minus
+(select codpro 
+            from(
+                    (select v.codpro, p.codpie FROM
+                            (select distinct codpro from ventas) v,
+                            (select codpie FROM pieza where upper(color) in ('BLANCO')) p
+                            
+                    )
+                    minus  
+                    (select ventas.codpro, pieza.codpie from ventas, pieza WHERE ventas.codpie=pieza.codpie and pieza.color='Blanco')));
+
+
+select * from proveedor p where not exists ((select codpie from pieza where color='Blanco') minus (select codpie from ventas v where p.codpro=v.codpro));
+
+
+--Proyectos que han sido abastecidos por todos los proveedores con estatus mayor que 2
+(select codpj from ventas)
+minus
+(select codpj 
+            from(
+                    (select v.codpj, p.codpro FROM
+                            (select distinct codpj from ventas) v,
+                            (select codpro FROM proveedor where status>2) p
+                            
+                    )
+                    minus  
+                    (select codpj, codpro FROM ventas)
+            )
+);
+
+select * from proyecto j where not exists(
+select codpro from proveedor where status>2
+minus
+select codpro from ventas v where v.codpj=j.codpj);
+
+
+
+--Piezas que han sido vendidas por el mismo proveedor a todos los proyectos de
+--Londres
+select distinct codpie,codpro from ventas v1 where not exists(
+(select codpj from proyecto p where p.ciudad='Londres') minus
+(select codpj from ventas v2 where v1.codpro=v2.codpro and v1.codpie=v2.codpie));
+
+
+--Encontrar la cantidad total de piezas que ha vendido cada proveedor que cumple
+--la condicion de vender todas las piezas suministradas por el proveedor S2
+select codpro, sum(cantidad) suma from ((select distinct v.codpro from 
+(select * from ((select * from ventas) natural join (select distinct codpie 
+from ((select * from proveedor where codpro='S2') natural join 
+(select * from ventas)))))v, (select * from ((select * from ventas) 
+natural join (select distinct codpie from ((select * from proveedor where 
+codpro='S2') natural join (select * from ventas)))))b where v.codpro=b.codpro 
+and ((v.codpie='P2' and b.codpie='P5') or (v.codpie='P5' and b.codpie='P2'))) 
+natural join (select * from ventas)) group by codpro;
+
+select codpro, sum(cantidad) suma_piezas from (select codpro, cantidad from ventas p where not exists
+((select codpie from ventas where codpro ='S2') minus
+(select codpie from ventas where ventas.codpro=p.codpro))) group by codpro;
+
+
+--Todos los pedidos del año 2016
+select * from ventas where to_char(fecha,'yyyy')='2016';
+
+
+--Pedidos que se hacen en los primeros 15 dias de cada mes
+select * from ventas where to_char(fecha,'dd')>=1 and to_char(fecha,'dd')<=15;
+
+
+--Pedidos que se han hecho en enero
+select * from ventas where  to_char(fecha,'mm')=01;
+
+
+--Cantidades totales vendidas cada año
+select to_char(fecha,'yyyy') año,count(cantidad) cantidad_total from ventas group by to_char(fecha,'yyyy') order by to_char(fecha,'yyyy');
+
+
+--Agrupar por meses el numero de pedidos hechos en 2015
+select to_char(fecha,'month') mes,count(cantidad) cantidad_total from ventas where to_char(fecha,'yyyy')='2015' group by to_char(fecha,'month');
+
+
+--Para cada año todas las ventas que ha hecho por meses
+select to_char(fecha,'yyyy') año,to_char(fecha,'month') mes,count(cantidad) cantidad_total from ventas group by to_char(fecha,'month'), to_char(fecha,'yyyy') order by to_char(fecha,'yyyy');
+
+
+--Ventas de hoy
+select * from ventas where fecha=sysdate;
+
+
+CREACION DE TABLAS E INSERCION
+CREATE TABLE Sala(
+Sala# varchar2(10),
+PRIMARY KEY(Sala#)
+);
+
+CREATE TABLE Pelicula(
+P# varchar2(10),
+Titulo varchar2(10),
+PRIMARY KEY (P#));
+
+
+CREATE TABLE Asiento(
+Sala# varchar2(10) REFERENCES Sala(Sala#),
+Fila varchar2(10),
+Columna varchar2(10),
+PRIMARY KEY (Sala#, Fila, Columna));
+
+CREATE TABLE Copia(
+Cop# varchar2(10) ,
+P# varchar2(10) REFERENCES Pelicula(P#),
+PRIMARY KEY (Cop#, P#));
+
+CREATE TABLE Proyeccion(
+Cop# varchar2(10) not null ,
+P# varchar2(10)not null ,
+Fecha date,
+Hora_ini int check (Hora_ini between 0 and 1 or hora_ini between 10 and 23),
+Sala# varchar2(10) REFERENCES Sala(Sala#) not null,
+PRIMARY KEY (Fecha, Hora_ini, Sala#),
+UNIQUE(Cop#, P#, Fecha, Hora_ini),
+FOREIGN KEY (Cop#, P#) REFERENCES Copia(Cop#, P#)
+);
+
+CREATE TABLE Entrada(
+Fecha date,
+Hora_ini int check (Hora_ini between 0 and 1 or hora_ini between 10 and 23),
+Sala# varchar2(10),
+Fila varchar2(10),
+Columna varchar2(10),
+PRIMARY KEY (Fecha, Hora_ini, Sala#, Fila, Columna),
+FOREIGN KEY(Fecha,Hora_ini,Sala#) references Proyeccion(Fecha, Hora_ini, Sala#),
+FOREIGN KEY(Sala#, Fila, Columna) references Asiento(Sala#, Fila, Columna)
+);
+
+
+INSERT INTO Pelicula VALUES ('123', 'Batman');
+INSERT INTO Copia VALUES ('COP12', '123');
+INSERT INTO Sala VALUES ('SALA1');
+INSERT INTO Asiento VALUES ('SALA1', 'F1', 'C1');
+INSERT INTO Proyeccion VALUES ('COP12', '123', SYSDATE, 12, 'SALA1');
+INSERT INTO Entrada VALUES (SYSDATE, 12, 'SALA1', 'F1', 'C1');
+
+
+
+drop table Entrada;
+drop table Proyeccion;
+drop table Copia;
+drop table Asiento;
+drop table Pelicula;
+drop table Sala;
+------------------------------------------------------------------
+
+
+MAS CREACION DE TABLAS
+
+
+
+create table Prueba(
+Cod_pru varchar2(30),
+anio int check (anio >= 1900),
+PRIMARY KEY (Cod_pru, anio)
+);
+
+insert into Prueba values ('P12', 2000);
+
+create table Etapas(
+Cod_pru varchar2(30),
+anio int check (anio >= 1900),
+No_etapa int check (No_etapa > 0 and No_etapa <= 30),
+Fecha date,
+CiuSal varchar2(30),
+CiuLLe varchar2(30),
+Kms int,
+PRIMARY KEY (Cod_pru, anio, No_etapa),
+FOREIGN KEY (Cod_pru, anio) REFERENCES Prueba(Cod_pru, anio)
+);
+
+insert into Etapas values ('P12', 2000, 25, '28/09/2017', 'Pekin', 'Madrid', 20);
+
+create table Equipo(
+Cod_eq varchar2(30),
+Nombre_eq varchar2(30),
+Director varchar2(30),
+PRIMARY KEY (Cod_eq)
+);
+
+insert into Equipo values ('E12', 'Numa', 'Pepe');
+
+create table Corredores(
+No_corre int check (No_corre > 0 and No_corre <= 9999),
+Cod_eq varchar2(30),
+pais varchar2(30),
+nom_corre varchar2(30),
+PRIMARY KEY (No_corre),
+FOREIGN KEY (Cod_eq) REFERENCES Equipo(Cod_eq)
+);
+
+insert into Corredores values (1000, 'E12', 'China', 'Pepon');
+
+create table Tiempos(
+No_corre int check (No_corre > 0 and No_corre <= 9999),
+Cod_pru varchar2(30),
+anio int check (anio >= 1900),
+No_etapa int check (No_etapa > 0 and No_etapa <= 30),
+Tiempo int not null,
+PRIMARY KEY (No_corre, Cod_pru, anio, No_etapa),
+FOREIGN KEY (No_corre) REFERENCES Corredores(No_corre),
+FOREIGN KEY (Cod_pru, anio, No_etapa) REFERENCES Etapas(Cod_pru, anio, No_etapa)
+);
+
+insert into Tiempos values (1000, 'P12', 2000, 25, 3000);
+
+drop table Tiempos;
+drop table Corredores;
+drop table Equipo;
+drop table Etapas;
+drop table Prueba;
+----------------------------------------------------------------
+PRACTICANDO PARA EXAMEN CREACION DE TABLAS
+
+create table Equipo(
+EQ# varchar2(10) not null,
+Nombre varchar(10) not null,
+Anio varchar2(10) not null,
+Bonus varchar2(10) not null,
+PRIMARY KEY (EQ#)
+);
+
+insert into Equipo values ('Eq1', 'Madrid', '2015', 'B');
+
+create table Sitio(
+Sitio# varchar2(10) not null,
+Denom varchar(10) not null,
+Provincia varchar2(10) not null,
+PRIMARY KEY (Sitio#)
+);
+
+insert into Sitio values ('S1', 'Denom', 'Cadiz');
+
+create table Parcela(
+Sitio# varchar2(10) not null,
+P# varchar(10) not null,
+Longi varchar2(10) not null,
+Anch varchar2(10) not null,
+PRIMARY KEY (Sitio#, P#),
+FOREIGN KEY (Sitio#) REFERENCES Sitio(Sitio#)
+);
+
+insert into Parcela values ('S1', 'P1', '28', '28');
+
+create table Excava(
+Sitio# varchar2(10) not null,
+P# varchar(10) not null,
+Fecha date not null,
+EQ# varchar2(10) not null,
+NHallas int check (NHallas >= 0) not null,
+PRIMARY KEY (Sitio#, P#, Fecha),
+FOREIGN KEY (Sitio#,P#) REFERENCES Parcela(Sitio#,P#),
+FOREIGN KEY (EQ#) REFERENCES Equipo(EQ#)
+);
+
+insert into Excava values ('S1', 'P1', '23/02/2015', 'Eq1', 5);
+
+create table Arqueologo(
+Arq# varchar2(10) not null PRIMARY KEY,
+Nombre varchar2(10) not null,
+Origen varchar2(10) not null,
+Exper varchar2(10) not null,
+EQ# varchar2(10) not null,
+FOREIGN KEY (EQ#) REFERENCES Equipo(EQ#)
+);
+
+insert into Arqueologo values ('Arq1', 'Pepe', 'Malasania', 'Expe', 'Eq1');
+
+drop table Arqueologo;
+drop table Excava;
+drop table Parcela;
+drop table Sitio;
+drop table Equipo;
+---------------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Table ALUMNOS
+--------------------------------------------------------
+
+  CREATE TABLE "ALUMNOS" 
+   (	"DNI" VARCHAR2(8 BYTE) PRIMARY KEY, 
+	"APE1" VARCHAR2(10 BYTE), 
+	"APE2" VARCHAR2(10 BYTE), 
+	"NOMBRE" VARCHAR2(10 BYTE), 
+	"EDAD" NUMBER(3,0), 
+	"PROVINCIA" VARCHAR2(10 BYTE), 
+	"BECA" CHAR(2 BYTE), 
+	"SEXO" CHAR(1 BYTE), 
+	"NOTA" NUMBER(5,2), 
+	"PROCEDENCIA" CHAR(2 BYTE)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "BDCCIA" ;
+--------------------------------------------------------
+--  DDL for Table ASIGNA
+--------------------------------------------------------
+
+  CREATE TABLE "ASIGNA" 
+   (	"ASI#" VARCHAR2(4 BYTE) PRIMARY KEY, 
+	"NOMBREAS" VARCHAR2(30 BYTE), 
+	"CURRICULUM" VARCHAR2(20 BYTE), 
+	"CREDT" NUMBER(4,1), 
+	"CREDPR" NUMBER(4,1), 
+	"CARACTER" CHAR(2 BYTE), 
+	"TEMP" CHAR(2 BYTE), 
+	"CURSO" NUMBER(2,0)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "BDCCIA" ;
+--------------------------------------------------------
+--  DDL for Table MATRICULA
+--------------------------------------------------------
+
+  CREATE TABLE "MATRICULA" 
+   (	"CODASI#" VARCHAR2(4 BYTE) REFERENCES Asigna(ASI#), 
+	"DNI" VARCHAR2(8 BYTE) REFERENCES Alumnos(DNI), 
+	"CURSO_ACADEMICO" VARCHAR2(9 BYTE), 
+	"CALIFICACION" VARCHAR2(2 BYTE), 
+	"NOTAS" NUMBER(5,2),
+	PRIMARY KEY(CODASI#,DNI,CURSO_ACADEMICO)
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "BDCCIA" ;
+REM INSERTING into ALUMNOS
+SET DEFINE OFF;
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('24284256','Perez','Perez','Jose','23','Granada','no','m','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('2428456','Sanchez','Perez','Juan','23','Jaen','no','m','10,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('24283256','Perez','Rodriguez','Antonia','25','Granada','si','m','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('242256','Perez','Perez','Luis','23','Almeria','no','v','7,85','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('284256','Lopez','Perez','Jose','23','Granada','no','v','5,55','lo');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('84256','Perez','Sanchez','Carmen','28','Sevilla','si','m','9,55','es');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('242856','Alvarez','Perez','Miguel','18','Granada','no','v','6,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('2424256','Perez','Lopez','Alvaro','23','Almeria','si','v','9,55','ot');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('242842','Sanchez','Jimenez','Antonia','35','Cordoba','no','m','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('24256','Lopez','Ruiz','Maria','19','Cadiz','no','m','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('8456','Martinez','Perez','Luis','25','Granada','si','v','7,58','lo');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('324256','Perez','Jimenez','David','25','Granada','no','v','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('424256','Perez','Jimenez','Juan','22','Sevilla','no','v','4,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('2422560','Sanchez','Perez','Jose','23','Sevilla','no','v','7,85','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('2842560','Alvarez','Perez','Jose','23','Cordoba','no','v','5,55','lo');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('842560','Perez','Sanchez','Adela','25','Sevilla','si','m','9,55','es');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('2428560','Alvarez','Sanchez','Roque','19','Granada','si','v','6,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('2428420','Sanchez','Jimenez','Josefa','35','Cordoba','no','m','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('242560','Lopez','Ruiz','Carmen','25','Huelva','si','m','9,55','lo');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('84560','Martinez','Perez','Antonio','27','Granada','si','v','5,55','lo');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('3242560','Jimenez','Jimenez','Jose','22','Granada','no','v','7,55','cu');
+Insert into ALUMNOS (DNI,APE1,APE2,NOMBRE,EDAD,PROVINCIA,BECA,SEXO,NOTA,PROCEDENCIA) values ('4242560','Perez','Jimenez','Luis','26','Sevilla','no','v','6,87','cu');
+REM INSERTING into ASIGNA
+SET DEFINE OFF;
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('bd1','Bases de datos 1','Grado Informatica','3','1,5','tr','cu','2');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('bda','Bases de datos avanzadas','Master Informatica ','3','1,5','tr','cu','5');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('sis','Sistemas de informaci?n','Grado Informatica','3','1,5','tr','cu','3');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('ta','Teoria de Algoritmos','Grado Informatica','4,5','3','tr','cu','2');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('alg','Algoritmica','Master Informatica ','4,5','3','tr','cu','5');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('apr','Tecnicas de Aprendizaje','Master Informatica ','4,5','3','tr','cu','4');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('ing1','Ingles I','Todos','3','3','lc','an','1');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('ing2','Ingles II','Todos','3','3','lc','an','3');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('mab1','Modelos avanzados I','Master Informatica ','3','3','op','cu','4');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('tec1','Tecnicas de Gestion I','Grado Informatica','7,5','4,5','op','an','1');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('tec2','Tecnicas de Gestion II','Grado Informatica','7,5','4,5','op','an','3');
+Insert into ASIGNA (ASI#,NOMBREAS,CURRICULUM,CREDT,CREDPR,CARACTER,TEMP,CURSO) values ('mab2','Modelos Avanzados II','Master Informatica ','3','3','op','cu','5');
+REM INSERTING into MATRICULA
+SET DEFINE OFF;
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','842560','2013-2014','su','4');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','2428420','2013-2014','su','4');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','242560','2013-2014','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','3242560','2013-2014','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','242560','2013-2014','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','3242560','2013-2014','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','2842560','2013-2014','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','4242560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','2422560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','2428560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','242560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','84560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','242560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','3242560','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','2428420','2013-2014','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','84560','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','4242560','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','2428420','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','2842560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','842560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','2428560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','84560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','4242560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2422560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','2422560','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','2842560','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','842560','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','2428560','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bda','84560','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','2428420','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','242560','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','3242560','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','242560','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','3242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('sis','4242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','2422560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','2842560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','842560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','2428560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','84560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('alg','4242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('apr','2422560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2428560','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','84560','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','4242560','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','2422560','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','324256','2015-2016','no','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','424256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2422560','2015-2016','sb','9');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','84560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','3242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','4242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','24284256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2428456','2014-2015','su','2,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','24283256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','242256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','284256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','84256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2424256','2014-2015','su','3,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','242842','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','8456','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','324256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','424256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2422560','2014-2015','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2842560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','842560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2428420','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','242560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','84560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','3242560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','4242560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24284256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428456','2014-2015','su','3,4');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24283256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242256','2014-2015','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','284256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','84256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2424256','2014-2015','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242842','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','8456','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','324256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','424256','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2422560','2014-2015','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2842560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','842560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428420','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','84560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','3242560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','4242560','2014-2015','np',null);
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','24283256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','324256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','3242560','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','24283256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','324256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','3242560','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','24283256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','324256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','3242560','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24283256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','324256','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','3242560','2013-2014','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','24284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2428456','2015-2016','nt','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','24283256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','242256','2015-2016','nt','7,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','84256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','242856','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2424256','2015-2016','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','24256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','8456','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','324256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','424256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2422560','2015-2016','nt','8,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','2428560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','84560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','3242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab1','4242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','24284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','2428456','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','24283256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','242256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','84256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','242856','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','2424256','2015-2016','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','24256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','8456','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','324256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','424256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','2422560','2015-2016','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','2842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','2428560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','84560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','3242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('mab2','4242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','24284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2428456','2015-2016','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','24283256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','242256','2015-2016','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','84256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','242856','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2424256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','24256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','8456','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','324256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','424256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2422560','2015-2016','sb','9');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','842560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','2428560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','84560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','3242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec1','4242560','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428456','2015-2016','no','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24283256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242256','2015-2016','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','284256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','84256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242856','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2424256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24256','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','8456','2015-2016','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','242842','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','2428420','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','24284256','2016-2017','no','7,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','2428456','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','242856','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','2428560','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','324256','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','3242560','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','424256','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','4242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242256','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2422560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2424256','2016-2017','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24256','2016-2017','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24283256','2016-2017','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242842','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428420','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','24284256','2016-2017','no','8,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428456','2016-2017','no','8,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','242856','2016-2017','no','8,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','2428560','2016-2017','no','8,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','324256','2016-2017','no','8');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','3242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','424256','2016-2017','no','8,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('tec2','4242560','2016-2017','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','242256','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','2422560','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','2424256','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','24256','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','242560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','24283256','2014-2015','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','242842','2014-2015','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','2428420','2014-2015','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','24284256','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','2428456','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','242856','2015-2016','ap','5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','2428560','2014-2015','su','4');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','324256','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','3242560','2014-2015','su','4');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','424256','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('bd1','4242560','2014-2015','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','242256','2014-2015','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','2422560','2014-2015','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','2424256','2014-2015','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','24256','2014-2015','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','242560','2014-2015','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','24283256','2014-2015','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','242842','2015-2016','ap','6,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','2428420','2015-2016','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','24284256','2015-2016','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','2428456','2015-2016','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','242856','2015-2016','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','2428560','2015-2016','no','7');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','324256','2015-2016','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','3242560','2014-2015','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','424256','2015-2016','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ing2','4242560','2015-2016','ap','5,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','242256','2015-2016','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','2422560','2015-2016','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','2424256','2016-2017','su','4,5');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','24256','2016-2017','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','242560','2016-2017','ap','6');
+Insert into MATRICULA (CODASI#,DNI,CURSO_ACADEMICO,CALIFICACION,NOTAS) values ('ta','24283256','2016-2017','no','8');
+
+
+drop table matricula;
+drop table asigna;
+drop table alumnos;
+
+
+--Muestra número de alumnos por asignatura y curso académico ordenados por asignatura y número de alumnos
+select codasi#, curso_academico, count(*) alumnos from matricula group by codasi#,curso_academico order by codasi# , count(*);
+
+-- Mostrar para cada asignatura el número máximo de alumnos que ha tenido y el curso en que ha ocurrido
+Select codasi#,curso_academico,count(*) from matricula group by codasi#,curso_academico having
+count(*)=any(select max(count(*)) from  matricula ma where matricula.CODASI# = ma.CODASI#  group by ma.codasi#,ma.curso_academico)
+order by matricula.CODASI#;
+
+--Muestra las asignaturas que han tenido mayor numero de alumnos y cuando
+select distinct codasi#,curso_academico,count(*) from matricula group by codasi#, curso_academico having (count(*) >= all(select count(*) alumnos from matricula group by codasi#,curso_academico)) ; 
+
+
+-- Asignaturas que tienen alumnos matriculados en todos los cursos académicos (Dos alternativas de solución)
+Select asi#,nombreas from asigna a where not exists
+      (select * from matricula m1 where 
+          not exists (select * from matricula m2 where a.asi#=m2.codasi# and m1.curso_academico=m2.curso_academico));
+-------------------------------------------------------------
+-- Mostrar los datos del alumno con dni 242856'
+select * from alumnos where dni='242856';
+
+-- Mostrar todos los alumnos ordenados por apellidos y nombre
+select * from alumnos order by ape1, ape2, nombre;
+
+-- Alumnos menores de 25 años ordenados por edad (descendente)
+--y por apellidos y nombre
+select * from alumnos where edad<25 order by edad desc, ape1,ape2,nombre
+
+--Alumnos entre 20 y 30 años procedentes de las provincias de 
+--Granada, Jaen o Almería ordenados por apellidos y nombre.
+select * from alumnos where (edad between 20 and 30) and upper(provincia) in ('GRANADA','ALMERIA','JAEN') order by ape1,ape2,nombre
+
+-- Muestra ordenados los curriculum ditintos que hay
+select distinct curriculum from asigna order by curriculum
+
+-- DNI nombre, apellidos y curso académico de los alumnos 
+--mayores de 25 matriculados de la asignatura tec1 
+-- ordenados por curso académico y apellidos y nombre 
+select distinct nombre, ape1, ape2, curso_academico from ((select * from matricula where codasi#='tec1') natural join (select * from alumnos where edad>25));
+
+
+select curso_academico, al.dni,nombre,ape1,ape2 from alumnos al, matricula ma 
+where edad >25 and ma.codasi#='tec1' and al.dni=ma.dni 
+order by  curso_academico,ape1,ape2,nombre;
+
+
+-- Mostrar los nombres de la asignaturas optativas con más de 4.5 
+--créditos totales en las que está o ha estado matriculado el 
+--alumno Luis Perez Jimenez ordenadas por nombre de asignatura.
+select nombreas from ((select * from asigna where caracter='op' and credt>'4,5') natural join (select * from alumnos where upper(nombre) in ('LUIS') and upper(ape1) in ('PEREZ') and upper(ape2) in ('JIMENEZ')));
+
+
+-- Asignaturas de  más de 6 créditos y 
+--que han tenido alumnos en el curso 2014-2015
+select asi# from asigna where credt+credpr >6
+    intersect
+select codasi# from matricula where curso_academico='2014-2015';
+
+--Alumnos matriculados de alguna asignatura optativa ordenados 
+--por apellidos y nombre (Dos soluciones)
+select ape1,ape2,nombre from ((select distinct dni from matricula where codasi# = any(select asi# from asigna where caracter='op')) natural join (select * from alumnos))
+
+select distinct alumnos.dni,ape1,ape2,nombre from matricula,alumnos
+where alumnos.dni=matricula.dni 
+      and codasi# in (select asi# from asigna where caracter='op') 
+order by ape1,ape2,nombre;
+
+
+--Asignaturas que están en el último curso (Tres soluciones)
+select nombreas from asigna where curso=(select max(curso) from asigna)
+
+select asi# from asigna where curso>= all(select curso from asigna);
+
+select asi# from asigna where curso= (select max(curso) from asigna);
+
+select asi# from asigna as1 where not exists (
+   select * from asigna as2 where as2.curso>as1.curso
+);
+
+--Alumnos matriculados en asignaturas 
+--del último curso (Dos soluciones)
+select ape1,ape2,nombre from alumnos where dni = any(select distinct dni from matricula where codasi# = any((select asi# from asigna where curso= (select max(curso) from asigna))));
+
+
+-- DNI nombre y apellidos de alumnos 
+--matriculados de la asignatura 'mab1'
+select dni, nombre, ape1, ape2 from alumnos where dni =any(select dni from matricula where codasi# = 'mab1')
+
+
+
+-- DNI nombre y apellidos de alumnos 
+--no matriculados de la asignatura 'mabd1'
+select dni,ape1, ape2,nombre from alumnos where not exists (select * from matricula where codasi# = 'mab1' and alumnos.dni=matricula.dni)
+
+
+--código y nombre de asignaturas en las que no 
+--hay ningún alumno matriculado
+select asi#, nombreas from asigna where not exists (select codasi# from matricula where matricula.codasi#=asigna.asi#)
+
+
+-- Alumnos de edad mínima (Tres soluciones)
+select * from alumnos where edad=(select min(edad) from alumnos)
+
+
+--Edad media de los alumnos por sexo
+select sexo, AVG(edad) edad from alumnos group by sexo
+
+-- Edad media de alumnos varones
+select AVG(edad) edad from alumnos group by sexo having sexo='v'
+
+--Número de alumnos en cada asignatura en cada curso académico 
+select codasi#, curso_academico, count(*) alumnos from matricula group by curso_academico, codasi# 
+
+--Número de alumnos en cada asignatura en cada curso académico para aquellos cursos/asignaturas 
+--con más de 10 alumnos
+select codasi#, curso_academico, count(*) alumnos from matricula group by curso_academico, codasi# having count(*)>10
+
+
+-- Obtiene la media de las notas cada asignatura 
+-- por curso académico y asignatura (Se obtiene con dos decimales)
+-- para aquellos cursos en los que hay más de 50 alumnos y se 
+-- ordena por nota media
+select curso_academico, codasi#, round(AVG(notas),2) notas from matricula ma group by curso_academico, codasi# having (select count(*) from matricula me where ma.curso_academico=me.curso_academico group by curso_academico)>50 order by notas
+
+Select curso_academico, nombreas, round(avg(notas),2) nota_media from matricula,asigna  where codasi#=asi# and  
+50<=(Select count(*) from matricula ma where ma.curso_academico=matricula.curso_academico) 
+group by curso_academico, nombreas order by curso_academico,avg(notas);
+
+
+-- Obtiene la media de las notas cada asignatura por curso
+--académico y asignatura (Se obtiene con dos decimales)
+-- para aquellos cursos en los que hay más de 50
+--alumnos y cursos/asignaturas con nota media mayor que cinco,
+---se ordena por nota media. Notese la diferencia
+--entre selección y having.
+select curso_academico, codasi#, round(AVG(notas),2) notas from matricula ma group by curso_academico, codasi# having ((select count(*) from matricula me where ma.curso_academico=me.curso_academico group by curso_academico)>50) and AVG(notas)>5 order by notas
+
+
+-- Encontrar los nombres de las asignaturas que se han
+--impartido en el curso 2014-2015 junto con el número
+--de alumnos matriculados en ellas 
+select nombreas, alumns from (select nombreas, asi# from asigna where asi# = any(select codasi#  from matricula where curso_academico='2014-2015' group by codasi#)) ver1, (select codasi#, count(*) alumns from matricula where curso_academico='2014-2015' group by codasi#) ver2 where ver1.asi#=ver2.codasi#
+
+select nombreas,count(*) from asigna, matricula where asigna.asi#=matricula.codasi# and
+curso_academico='2014-2015' group by nombreas;
+
+-- Encontrar los nombres de las asignaturas que tienen
+--mayor número de alumnos en el 2014-2015
+select nombreas, alumns from (select nombreas, asi# from asigna where asi# = any(select codasi#  from matricula where curso_academico='2014-2015' group by codasi#)) ver1, (select codasi#, count(*) alumns from matricula where curso_academico='2014-2015' group by codasi#) ver2 where ver1.asi#=ver2.codasi# and alumns=(select max(count(*)) from matricula where curso_academico='2014-2015' group by codasi#)
+
+
+--Muestra número de alumnos por asignatura y
+--curso académico ordenados por asignatura y número de alumnos
+select codasi#, curso_academico, count(*) alumnos from matricula group by codasi#,curso_academico order by codasi#, alumnos
+
+
+-- Mostrar para cada asignatura el número máximo de alumnos que
+--ha tenido y el curso en que ha ocurrido
+select codasi#, curso_academico, count(*) alumnos from 
+matricula me group by codasi#, curso_academico having (count(*) =
+(select max(count(*)) from matricula ma where ma.codasi#=
+me.codasi# group by codasi#, curso_academico))
+
+
+-- Alumnos matriculados de todas las asignaturas optativas
+select * from alumnos p where not exists ((select asi# from asigna where caracter='op') minus (select codasi# from matricula v where p.dni=v.dni));
+
+
+Select ape1,ape2,nombre from alumnos a where
+not exists (
+    select asi# from asigna where caracter='op'
+       minus
+    select m.codasi# from matricula m where m.dni=a.dni
+);
+
+
+-- Asignaturas que tienen o han tenido  matriculados a todos 
+-- los alumnos de Almería 
+Select asi#, nombreas from asigna a where
+not exists (
+    select dni from alumnos where upper(provincia) in ('ALMERIA')
+       minus
+    select m.dni from matricula m where m.codasi#=a.asi#
+);
+
+-- Alumnos que han aprobado todas las asignaturas del
+--grado en Informática
+Select ape1,ape2,nombre from alumnos a where
+not exists (
+    select asi# from asigna where curriculum='Grado Informatica'
+       minus
+    select m.codasi# from matricula m where m.dni=a.dni and notas>='5'
+);
+
+
+--Alumnos becarios matriculados de todas las asignaturas 
+--de más de seis créditos
+Select ape1,ape2,nombre from alumnos a where
+not exists (
+    select asi# from asigna where credpr+credt>6
+       minus
+    select m.codasi# from matricula m where m.dni=a.dni 
+) and beca='si';
+
+
+-- Alumnos de edad mínima
+select * from alumnos where edad=(select min(edad) from alumnos)
+
+
+-- Asignaturas que tienen o han tenido matriculados más 
+-- de 25 alumnos, con independencia del curso académico
+select codasi#, count(*) alumnos from matricula group by codasi# having count(*)>25

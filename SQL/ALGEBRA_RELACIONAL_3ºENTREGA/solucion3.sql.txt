@@ -1,0 +1,17 @@
+3.65 Muestra los equipos que han ganado algún encuentro jugando como local.
+
+Select distinct ENCUENTROS.elocal from Encuentros where(plocal>pvisitante);
+
+-------------------------------------------------
+
+3.69 Muestra los encuentros que faltan para terminar la liga.
+
+SELECT ENCUENTROS.elocal, ENCUENTROS.evisitante FROM ENCUENTROS WHERE fecha>SYSDATE;
+
+-------------------------------------------------
+
+3.75 Muestra todas las victorias de cada equipo, jugando como local o como visitante.
+
+Select elocal,plocal,pvisitante from ENCUENTROS where(plocal>pvisitante)
+union
+Select evisitante,pvisitante,plocal from ENCUENTROS where(pvisitante>plocal);

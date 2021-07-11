@@ -1,0 +1,1 @@
+INSERT INTO VENTAS SELECT * FROM opc.ventas;

@@ -1,0 +1,1 @@
+SELECT TO_CHAR(fechaalta,'dd-mon-yyyy') FROM plantilla;
